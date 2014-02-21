@@ -1,0 +1,10 @@
+name: ${project.name}
+version: ${project.version}
+main: ${project.main}
+authors: ${project.authors}
+
+commands:
+  team:
+    usage: /team <teamname>
+    permission: uhc.commands.team
+    description: create a team
