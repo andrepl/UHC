@@ -26,8 +26,7 @@ public class TeamCommand extends BaseCommand {
 			"/team <teamName> - create a new team.",
 			"/team invite <playerName> - invite a player to join the team",
 			"/team join <teamName> - join a team you've been invited to",
-            "/team kick <playerName> - kicks a player from the team",
-            "/team leave - leaves the team"
+			"/team leave - leaves the team"
 		});
 		this.registerSubcommand(new InviteCommand(plugin));
 		this.registerSubcommand(new JoinCommand(plugin));
