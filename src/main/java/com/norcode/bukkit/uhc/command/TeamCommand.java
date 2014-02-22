@@ -22,11 +22,11 @@ import java.util.List;
 
 public class TeamCommand extends BaseCommand {
 	public TeamCommand(JavaPlugin plugin) {
-		super(plugin, "team", null, "uhc.commands.team", new String[] {
-			"/team <teamName> - create a new team.",
-			"/team invite <playerName> - invite a player to join the team",
-			"/team join <teamName> - join a team you've been invited to",
-			"/team leave - leaves the team"
+		super(plugin, "team", null, "uhc.commands.team", new String[]{
+				"/team <teamName> - create a new team.",
+				"/team invite <playerName> - invite a player to join the team",
+				"/team join <teamName> - join a team you've been invited to",
+				"/team leave - leaves the team"
 		});
 		this.registerSubcommand(new InviteCommand(plugin));
 		this.registerSubcommand(new JoinCommand(plugin));
@@ -46,7 +46,7 @@ public class TeamCommand extends BaseCommand {
 			}
 			try {
 				Team team = ((UHC) plugin).registerTeam(teamName, (Player) commandSender);
-				commandSender.sendMessage(new String[] {
+				commandSender.sendMessage(new String[]{
 						ChatColor.BOLD + "Successfully Created " + team.getDisplayName() + "[" + team.getName() + "]",
 						"You may now invite players using /team invite <playerName>",
 				});
@@ -57,59 +57,59 @@ public class TeamCommand extends BaseCommand {
 	}
 
 	public static class LeaveCommand extends BaseCommand {
-        public LeaveCommand(JavaPlugin plugin) {
-            super(plugin, "leave", new String[] {"quit"}, "uhc.commands.team.leave", new String[] {
-                "Leave your current team",
-                "If you are the team captain the team will be destroyed."
-            });
-        }
+		public LeaveCommand(JavaPlugin plugin) {
+			super(plugin, "leave", new String[]{"quit"}, "uhc.commands.team.leave", new String[]{
+					"Leave your current team",
+					"If you are the team captain the team will be destroyed."
+			});
+		}
 
-        @Override
-        protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
-            Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
+		@Override
+		protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
+			Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
 			commandSender.sendMessage("You have left the team.");
 			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
 			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
 			OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
 
 			if (team == null) {
-                throw new CommandError("You are not on a team.");
-            }
-            if (commandSender.getName().equals(capn.getName())) {
-                //disband the entire team if the captain leaves.
-                for (OfflinePlayer p: team.getPlayers()) {
-                    team.removePlayer(p);
-                    if (p.isOnline()) {
-                        Player onlinePlayer = (Player) p;
-                        onlinePlayer.sendMessage("Your team has been disbanded.");
-                    }
-                }
+				throw new CommandError("You are not on a team.");
+			}
+			if (commandSender.getName().equals(capn.getName())) {
+				//disband the entire team if the captain leaves.
+				for (OfflinePlayer p : team.getPlayers()) {
+					team.removePlayer(p);
+					if (p.isOnline()) {
+						Player onlinePlayer = (Player) p;
+						onlinePlayer.sendMessage("Your team has been disbanded.");
+					}
+				}
 				((UHC) plugin).getTeamScoreboard().resetScores(Bukkit.getOfflinePlayer(team.getName()));
-                team.unregister();
-                return;
-            }
-            team.removePlayer(((Player) commandSender).getPlayer());
+				team.unregister();
+				return;
+			}
+			team.removePlayer(((Player) commandSender).getPlayer());
 
-            score.setScore(score.getScore() - 1);
-            if (capn.isOnline()) {
-                Player onlineCaptain = (Player) capn;
-                onlineCaptain.sendMessage(((Player) commandSender).getPlayerListName() + " has left your team.");
-            }
-        }
-    }
+			score.setScore(score.getScore() - 1);
+			if (capn.isOnline()) {
+				Player onlineCaptain = (Player) capn;
+				onlineCaptain.sendMessage(((Player) commandSender).getPlayerListName() + " has left your team.");
+			}
+		}
+	}
 
-    public static class InviteCommand extends BaseCommand {
+	public static class InviteCommand extends BaseCommand {
 		public InviteCommand(JavaPlugin plugin) {
-			super(plugin, "invite", new String[] {"add"}, "uhc.commands.team.invite", new String[] {
-				"Invite another player to join the team.  ",
-				"Only the player who created the team may invite other players to join"
+			super(plugin, "invite", new String[]{"add"}, "uhc.commands.team.invite", new String[]{
+					"Invite another player to join the team.  ",
+					"Only the player who created the team may invite other players to join"
 			});
 		}
 
 		@Override
 		protected List<String> onTab(CommandSender sender, LinkedList<String> args) {
 			List<String> results = new ArrayList<String>();
-			for (Player p: plugin.getServer().getOnlinePlayers()) {
+			for (Player p : plugin.getServer().getOnlinePlayers()) {
 				if (!p.hasPermission("uhc.staff")) {
 					Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam(p);
 					if (team == null) {
@@ -130,7 +130,7 @@ public class TeamCommand extends BaseCommand {
 			if (!commandSender.getName().equals(capn.getName())) {
 				throw new CommandError("Only the team captain can invite other players to join.");
 			}
-			if (team.getSize() == ((UHC)plugin).getTeamSize()) {
+			if (team.getSize() == ((UHC) plugin).getTeamSize()) {
 				throw new CommandError("Team is already at capacity.");
 			}
 			String playerName = args.peek();
@@ -169,7 +169,7 @@ public class TeamCommand extends BaseCommand {
 
 	public static class JoinCommand extends BaseCommand {
 		public JoinCommand(JavaPlugin plugin) {
-			super(plugin, "join", null, "uhc.comands.team.join", new String[] {
+			super(plugin, "join", null, "uhc.comands.team.join", new String[]{
 					"Join a team you have previously been invited to.  ",
 			});
 		}
@@ -207,12 +207,12 @@ public class TeamCommand extends BaseCommand {
 			if (!invites.contains(team.getName())) {
 				throw new CommandError("You have not been invited to join " + team.getDisplayName());
 			}
-			if (team.getSize() == ((UHC)plugin).getTeamSize()) {
+			if (team.getSize() == ((UHC) plugin).getTeamSize()) {
 				throw new CommandError("That team already has the maximum number of players.");
 			}
 			team.addPlayer(player);
 			sender.sendMessage("You have joined " + team.getDisplayName());
-			for (OfflinePlayer op: team.getPlayers()) {
+			for (OfflinePlayer op : team.getPlayers()) {
 				if (op.isOnline()) {
 					op.getPlayer().sendMessage(player.getName() + " has joined the team.");
 				}
