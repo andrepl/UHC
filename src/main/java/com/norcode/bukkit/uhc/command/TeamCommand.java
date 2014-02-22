@@ -25,10 +25,12 @@ public class TeamCommand extends BaseCommand {
 		super(plugin, "team", null, "uhc.commands.team", new String[] {
 			"/team <teamName> - create a new team.",
 			"/team invite <playerName> - invite a player to join the team",
-			"/team join <teamName> - join a team you've been invited to"
+			"/team join <teamName> - join a team you've been invited to",
+			"/team leave - leaves the team"
 		});
 		this.registerSubcommand(new InviteCommand(plugin));
 		this.registerSubcommand(new JoinCommand(plugin));
+		this.registerSubcommand(new LeaveCommand(plugin));
 		plugin.getCommand("team").setExecutor(this);
 	}
 
@@ -54,9 +56,51 @@ public class TeamCommand extends BaseCommand {
 		}
 	}
 
-	public static class InviteCommand extends BaseCommand {
+	public static class LeaveCommand extends BaseCommand {
+        public LeaveCommand(JavaPlugin plugin) {
+            super(plugin, "leave", new String[] {"quit"}, "uhc.commands.team.leave", new String[] {
+                "Leave your current team",
+                "If you are the team captain the team will be destroyed."
+            });
+        }
+
+        @Override
+        protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
+            Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
+			commandSender.sendMessage("You have left the team.");
+			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
+			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
+			OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
+
+			if (team == null) {
+                throw new CommandError("You are not on a team.");
+            }
+            if (commandSender.getName().equals(capn.getName())) {
+                //disband the entire team if the captain leaves.
+                for (OfflinePlayer p: team.getPlayers()) {
+                    team.removePlayer(p);
+                    if (p.isOnline()) {
+                        Player onlinePlayer = (Player) p;
+                        onlinePlayer.sendMessage("Your team has been disbanded.");
+                    }
+                }
+				((UHC) plugin).getTeamScoreboard().resetScores(Bukkit.getOfflinePlayer(team.getName()));
+                team.unregister();
+                return;
+            }
+            team.removePlayer(((Player) commandSender).getPlayer());
+
+            score.setScore(score.getScore() - 1);
+            if (capn.isOnline()) {
+                Player onlineCaptain = (Player) capn;
+                onlineCaptain.sendMessage(((Player) commandSender).getPlayerListName() + " has left your team.");
+            }
+        }
+    }
+
+    public static class InviteCommand extends BaseCommand {
 		public InviteCommand(JavaPlugin plugin) {
-			super(plugin, "invite", new String[] {"add"}, "uhc.comands.team.invite", new String[] {
+			super(plugin, "invite", new String[] {"add"}, "uhc.commands.team.invite", new String[] {
 				"Invite another player to join the team.  ",
 				"Only the player who created the team may invite other players to join"
 			});
