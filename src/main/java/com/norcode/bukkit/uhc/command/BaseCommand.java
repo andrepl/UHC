@@ -125,7 +125,7 @@ public class BaseCommand implements TabExecutor {
 				for (BaseCommand sc : filterByPermission(sender, subcommands).values()) {
 					if (sc.name.toLowerCase().startsWith(partial)) {
 						results.add(sc.name);
-					} else {
+					} else if (sc.aliases != null) {
 						for (String a : sc.aliases) {
 							if (a.toLowerCase().startsWith(partial)) {
 								results.add(a);

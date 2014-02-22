@@ -1,6 +1,7 @@
 package com.norcode.bukkit.uhc;
 
 import com.norcode.bukkit.uhc.phase.EndGame;
+import com.norcode.bukkit.uhc.phase.GameSetup;
 import com.norcode.bukkit.uhc.phase.MainGame;
 import com.norcode.bukkit.uhc.phase.Phase;
 import com.norcode.bukkit.uhc.phase.PreGame;
@@ -9,30 +10,27 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Game extends BukkitRunnable {
 
-	private Phase[] phases;
+	private List<Phase> phases = new ArrayList<Phase>();
 	private Phase currentPhase;
-	private long phaseStartTime;
 	private UHC plugin;
 	private int phasePtr = -1;
 
 	public Game(UHC plugin) {
 		this.plugin = plugin;
-		this.initializeGamePhases();
 	}
 
-	private void initializeGamePhases() {
-		phases = new Phase[] {
-			new PreGame(this.plugin),
-			new MainGame(this.plugin),
-			new EndGame(this.plugin)
-		};
+	public void addPhase(Phase p) {
+		phases.add(p);
 	}
 
 	public void start() {
 		phasePtr = 0;
-		this.setPhase(phases[0]);
+		this.setPhase(phases.get(0));
 		this.runTaskTimer(plugin, 0, 20);
 	}
 
@@ -42,38 +40,45 @@ public class Game extends BukkitRunnable {
 			currentPhase.onEnd();
 		}
 		currentPhase = phase;
-		phaseStartTime = System.currentTimeMillis();
+		phase.setStartTime(System.currentTimeMillis());
 		plugin.getServer().getPluginManager().registerEvents(currentPhase, plugin);
 		currentPhase.onStart();
 	}
 
 	public void nextPhase() {
 		phasePtr ++;
-		if (phasePtr > phases.length -1) {
+		if (phasePtr > phases.size() -1) {
 		    gameOver();
+			return;
 		}
-		setPhase(phases[phasePtr]);
+		setPhase(phases.get(phasePtr));
 	}
 
 	private void gameOver() {
-		plugin.getLogger().info("Game Over!");
+		this.clearBars();
 		this.cancel();
-
+		this.currentPhase = null;
+		this.phasePtr = -1;
+		plugin.gameOver();
 	}
 
-	public long getElapsedTime() {
-		return System.currentTimeMillis() - phaseStartTime;
+	private void clearBars() {
+		for (Player p: plugin.getServer().getOnlinePlayers()) {
+			BarAPI.removeBar(p);
+		}
 	}
 
 	@Override
 	public void run() {
-		if (getElapsedTime() > currentPhase.getDuration()) {
+		if (currentPhase.isOver()) {
+			plugin.getLogger().info(currentPhase.getClass().getSimpleName() + " is over.");
 			nextPhase();
+			return;
 		}
+		int pct = currentPhase.getPercentage();
+		String msg = currentPhase.formatMessage(this);
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
-			int pct = getTimePercentageRemaining();
-			plugin.getLogger().info("Phase Pct: " + pct);
-			BarAPI.setMessage(p, currentPhase.formatMessage(this), (float)pct);
+			BarAPI.setMessage(p, msg, (float) pct);
 		}
 	}
 
@@ -81,7 +86,20 @@ public class Game extends BukkitRunnable {
 		return currentPhase;
 	}
 
-	public int getTimePercentageRemaining() {
-		return 100 - (int) ((getElapsedTime() / (double) currentPhase.getDuration()) * 100);
+
+	public boolean isGameSetup() {
+		return currentPhase instanceof GameSetup;
+	}
+
+	public boolean isPreGame() {
+		return currentPhase instanceof PreGame;
+	}
+
+	public boolean isMainGame() {
+		return currentPhase instanceof MainGame;
+	}
+
+	public boolean isEndGame() {
+		return currentPhase instanceof EndGame;
 	}
 }

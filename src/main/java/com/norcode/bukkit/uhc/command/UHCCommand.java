@@ -11,7 +11,28 @@ public class UHCCommand extends BaseCommand {
 	public UHCCommand(JavaPlugin plugin) {
 		super(plugin, "uhc", null, "uhc.commands.uhc", null);
 		registerSubcommand(new StartCommand(plugin));
+		registerSubcommand(new SetupCommand(plugin));
+		registerSubcommand(new UHCConfigCommand(plugin));
 		plugin.getCommand("uhc").setExecutor(this);
+	}
+
+	public static class SetupCommand extends BaseCommand {
+		public SetupCommand(JavaPlugin plugin) {
+			super(plugin, "setup", null, "uhc.commands.uhc.setup", new String[] {"start the map generation phase."});
+		}
+
+		@Override
+		protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
+			Game game = ((UHC) plugin).getGame();
+			if (game == null) {
+				commandSender.sendMessage("Generating " + plugin.getConfig().getString("world-name"));
+				((UHC) plugin).startSetup();
+			} else if (game.isGameSetup()) {
+				throw new CommandError("Setup is already in progress.");
+			} else {
+				throw new CommandError("Game is already in progress.");
+			}
+		}
 	}
 
 	public static class StartCommand extends BaseCommand {

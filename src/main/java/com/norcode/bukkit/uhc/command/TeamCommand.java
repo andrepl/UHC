@@ -1,5 +1,6 @@
 package com.norcode.bukkit.uhc.command;
 
+import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.UHC;
 import com.norcode.bukkit.uhc.UHCError;
 import com.norcode.bukkit.uhc.chat.ClickAction;
@@ -21,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TeamCommand extends BaseCommand {
+
 	public TeamCommand(JavaPlugin plugin) {
 		super(plugin, "team", null, "uhc.commands.team", new String[]{
 				"/team <teamName> - create a new team.",
@@ -39,6 +41,10 @@ public class TeamCommand extends BaseCommand {
 		if (args.size() == 0) {
 			showHelp(commandSender, label, args);
 		} else {
+			Game game = ((UHC) plugin).getGame();
+			if (game == null || !game.isPreGame()) {
+				throw new CommandError("You can only create a team during pre-game.");
+			}
 			String teamName = StringUtils.join(args, " ");
 			Team onTeam = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
 			if (onTeam != null) {
@@ -66,6 +72,9 @@ public class TeamCommand extends BaseCommand {
 
 		@Override
 		protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
+			if (!((UHC) plugin).getGame().isPreGame()) {
+				throw new CommandError("You can only leave a team during pre-game.");
+			}
 			Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
 			commandSender.sendMessage("You have left the team.");
 			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
@@ -125,6 +134,9 @@ public class TeamCommand extends BaseCommand {
 			Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
 			if (team == null) {
 				throw new CommandError("You are not on a team.");
+			}
+			if (!((UHC) plugin).getGame().isPreGame()) {
+				throw new CommandError("You can only send team invites during pre-game.");
 			}
 			OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
 			if (!commandSender.getName().equals(capn.getName())) {
@@ -190,6 +202,9 @@ public class TeamCommand extends BaseCommand {
 		protected void onExecute(CommandSender sender, String label, LinkedList<String> args) throws CommandError {
 			if (!(sender instanceof Player)) {
 				throw new CommandError("Only players can join teams.");
+			}
+			if (!((UHC) plugin).getGame().isPreGame()) {
+				throw new CommandError("You can only join a team during pre-game.");
 			}
 			Player player = ((Player) sender);
 			Team onTeam = ((UHC) plugin).getMainScoreboard().getPlayerTeam(player);

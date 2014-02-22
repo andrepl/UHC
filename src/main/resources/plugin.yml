@@ -12,3 +12,16 @@ commands:
     usage: /team <teamname>
     permission: uhc.commands.team
     description: create a team
+
+
+permissions:
+  uhc.commands.team:
+    default: true
+  uhc.commands.team.join:
+    default: true
+  uhc.commands.team.invite:
+    default: true
+  uhc.commands.team.leave:
+    default: true
+  uhc.commands.team.create:
+    default: true

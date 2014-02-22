@@ -2,12 +2,15 @@ package com.norcode.bukkit.uhc;
 
 import com.norcode.bukkit.uhc.command.TeamCommand;
 import com.norcode.bukkit.uhc.command.UHCCommand;
+import com.norcode.bukkit.uhc.phase.EndGame;
+import com.norcode.bukkit.uhc.phase.GameSetup;
+import com.norcode.bukkit.uhc.phase.MainGame;
 import com.norcode.bukkit.uhc.phase.PreGame;
-import com.wimbli.WorldBorder.Config;
+import com.norcode.bukkit.uhc.phase.Scatter;
 import com.wimbli.WorldBorder.WorldBorder;
-import com.wimbli.WorldBorder.WorldFillTask;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -21,24 +24,24 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class UHC extends JavaPlugin implements Listener {
 
-	private static final String worldName = "world";
+
 	private int teamIdx = 0;
-	private Field reportTotalField;
-	private Field reportNumField;
-	private Field reportTargetField;
+
+	private List<ChatColor> colors = new ArrayList<ChatColor>();
 	private Scoreboard teamScoreboard;
 	private Scoreboard mainScoreboard;
 	private PlayerListener playerListener;
-	private int teamSize = 1;
 	private int gameLength = 60;
 	private Game game = null;
 	private HashMap<String, String> teamCaptains = new HashMap<String, String>();
-	private boolean pregame = true;
+	private HashMap<String, Location> teamSpawnLocations = new HashMap<String, Location>();
+	private WorldSetup worldSetup;
 
 	public OfflinePlayer getTeamCaptain(String team) {
 		String name = teamCaptains.get(team);
@@ -53,9 +56,22 @@ public class UHC extends JavaPlugin implements Listener {
 		saveDefaultConfig();
 		loadConfig();
 		setupCommands();
-		reflectWB();
 		setupScoreboards();
 		playerListener = new PlayerListener(this);
+		for (ChatColor c: ChatColor.values()) {
+			if (c == ChatColor.RESET
+					|| c == ChatColor.BOLD
+					|| c == ChatColor.MAGIC
+					|| c == ChatColor.UNDERLINE
+					|| c == ChatColor.ITALIC
+					|| c == ChatColor.STRIKETHROUGH) {
+				continue;
+			}
+			colors.add(c);
+		}
+	}
+
+	public void findSpawnLocations() {
 
 	}
 
@@ -76,62 +92,17 @@ public class UHC extends JavaPlugin implements Listener {
 		obj.setDisplayName("HP");
 	}
 
-	private void reflectWB() {
-		try {
-			reportTotalField = WorldFillTask.class.getDeclaredField("reportTotal");
-			reportNumField = WorldFillTask.class.getDeclaredField("reportNum");
-			reportTargetField = WorldFillTask.class.getDeclaredField("reportTarget");
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		}
-	}
 
 	public WorldBorder getWorldBorder() {
 		return (WorldBorder) getServer().getPluginManager().getPlugin("WorldBorder");
 	}
 
 	public void loadConfig() {
-		int sizeX = getConfig().getInt("size.x", 1000);
-		int sizeY = getConfig().getInt("size.y", 1000);
-		teamSize = getConfig().getInt("team-size", 1);
-		World w = getServer().getWorld(worldName);
-
+		//teamSize = getConfig().getInt("team-size", 1);
+		String worldName = getConfig().getString("world-name");
+		worldSetup = new WorldSetup(this, worldName);
 	}
 
-	public void setupBorder(World world, int x1, int z1, int x2, int z2) {
-		Config.setBorderCorners(world.getName(), x1, z1, x2, z2);
-	}
-
-	public void startWorldGeneration() {
-		Config.fillTask = new WorldFillTask(getServer(), null, worldName, 208, 1, 1, true);
-		if (Config.fillTask.valid()) {
-			int task = getServer().getScheduler().scheduleSyncRepeatingTask(getWorldBorder(), Config.fillTask, 1, 1);
-			Config.fillTask.setTaskID(task);
-		}
-	}
-
-	public boolean generationComplete() {
-		return (Config.fillTask.isPaused() && getGenerationPercentage() == 100);
-	}
-
-	public int getGenerationPercentage() {
-		int reportTotal;
-		int reportNum;
-		int reportTarget;
-
-		try {
-			reportTotal = (Integer) reportTotalField.get(Config.fillTask);
-			reportNum = (Integer) reportNumField.get(Config.fillTask);
-			reportTarget = (Integer) reportTargetField.get(Config.fillTask);
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-			return -1;
-		}
-
-		double perc = ((double)(reportTotal + reportNum) / (double)reportTarget) * 100;
-		if (perc > 100) perc = 100;
-		return (int) perc;
-	}
 
 	public Team registerTeam(String name, Player captain) throws UHCError {
 		String slug = slugify(name);
@@ -172,7 +143,7 @@ public class UHC extends JavaPlugin implements Listener {
 	}
 
 	public ChatColor getNextTeamColor() {
-		return ChatColor.values()[teamIdx++];
+		return colors.get(teamIdx++);
 	}
 
 	public Scoreboard getTeamScoreboard() {
@@ -199,7 +170,7 @@ public class UHC extends JavaPlugin implements Listener {
 	}
 
 	public int getTeamSize() {
-		return teamSize;
+		return getConfig().getInt("team-size");
 	}
 
 	public void checkReady() {
@@ -209,6 +180,29 @@ public class UHC extends JavaPlugin implements Listener {
 
 	public void startGame() {
 		game = new Game(this);
+		game.addPhase(new PreGame(this));
+		game.addPhase(new Scatter(this));
+		game.addPhase(new MainGame(this));
+		game.addPhase(new EndGame(this));
 		game.start();
+	}
+
+	public void startSetup() {
+		game = new Game(this);
+		game.addPhase(new GameSetup(this));
+		game.start();
+	}
+
+	public WorldSetup getWorldSetup() {
+		return worldSetup;
+	}
+
+	public void gameOver() {
+
+		this.game = null;
+	}
+
+	public World getUHCWorld() {
+		return getServer().getWorld(getConfig().getString("world-name"));
 	}
 }

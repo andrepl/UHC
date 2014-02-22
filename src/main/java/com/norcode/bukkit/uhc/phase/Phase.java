@@ -11,6 +11,8 @@ public abstract class Phase implements Listener {
 	protected String name;
 	protected String message;
 	protected UHC plugin;
+	private long phaseStartTime = -1;
+	private int percentage;
 
 	protected Phase(UHC plugin, String name) {
 		this.plugin = plugin;
@@ -69,6 +71,26 @@ public abstract class Phase implements Listener {
 		}
 		sb.append(seconds);
 		return sb.toString();
+	}
+
+	public void setStartTime(long startTime) {
+		this.phaseStartTime = startTime;
+	}
+
+	public long getStartTime() {
+		return phaseStartTime;
+	}
+
+	public long getElapsedTime() {
+		return System.currentTimeMillis() - getStartTime();
+	}
+
+	public int getPercentage() {
+		return 100 - (int) ((getElapsedTime() / (double) getDuration()) * 100);
+	}
+
+	public boolean isOver() {
+		return getElapsedTime() >= getDuration();
 	}
 
 }

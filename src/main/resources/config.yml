@@ -3,3 +3,10 @@ size:
   z: 1000
 
 team-size: 2
+
+world-type: NORMAL
+environment: NORMAL
+world-seed: -123123123123
+generate-structures: true
+world-name: "UHCWorld"
+starter-kit: []
