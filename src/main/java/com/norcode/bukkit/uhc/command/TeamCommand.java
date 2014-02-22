@@ -30,6 +30,7 @@ public class TeamCommand extends BaseCommand {
 		});
 		this.registerSubcommand(new InviteCommand(plugin));
 		this.registerSubcommand(new JoinCommand(plugin));
+		this.registerSubcommand(new LeaveCommand(plugin));
 		plugin.getCommand("team").setExecutor(this);
 	}
 
@@ -66,10 +67,14 @@ public class TeamCommand extends BaseCommand {
         @Override
         protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
             Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
-            if (team == null) {
+			commandSender.sendMessage("You have left the team.");
+			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
+			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
+			OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
+
+			if (team == null) {
                 throw new CommandError("You are not on a team.");
             }
-            OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
             if (commandSender.getName().equals(capn.getName())) {
                 //disband the entire team if the captain leaves.
                 for (OfflinePlayer p: team.getPlayers()) {
@@ -79,13 +84,12 @@ public class TeamCommand extends BaseCommand {
                         onlinePlayer.sendMessage("Your team has been disbanded.");
                     }
                 }
+				((UHC) plugin).getTeamScoreboard().resetScores(Bukkit.getOfflinePlayer(team.getName()));
                 team.unregister();
                 return;
             }
             team.removePlayer(((Player) commandSender).getPlayer());
-            commandSender.sendMessage("You have left the team.");
-            Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
-            Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
+
             score.setScore(score.getScore() - 1);
             if (capn.isOnline()) {
                 Player onlineCaptain = (Player) capn;
