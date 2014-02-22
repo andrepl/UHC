@@ -3,7 +3,7 @@ package com.norcode.bukkit.uhc;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scoreboard.Scoreboard;
 
 public class PlayerListener implements Listener {
 	private UHC plugin;
@@ -15,13 +15,10 @@ public class PlayerListener implements Listener {
 
 	@EventHandler(ignoreCancelled=true)
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		plugin.getGameTimer().registerPlayer(event.getPlayer());
-		event.getPlayer().setScoreboard(plugin.getScoreboard(event.getPlayer()));
-	}
-
-	@EventHandler(ignoreCancelled=true)
-	public void onPlayerQuit(PlayerQuitEvent event) {
-		plugin.getGameTimer().unregisterPlayer(event.getPlayer());
+		Scoreboard s = plugin.getScoreboard(event.getPlayer());
+		if (s != null) {
+			event.getPlayer().setScoreboard(s);
+		}
 	}
 
 }

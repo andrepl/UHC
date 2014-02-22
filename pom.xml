@@ -33,7 +33,12 @@
         </plugins>
     </build>
 
+
     <repositories>
+        <repository>
+            <id>confuser-repo</id>
+            <url>http://ci.frostcast.net/plugin/repository/everything</url>
+        </repository>
         <repository>
             <id>bukkit-repo</id>
             <url>http://repo.bukkit.org/content/groups/public/</url>
@@ -49,6 +54,11 @@
             <groupId>com.wimbli.WorldBorder</groupId>
             <artifactId>WorldBorder</artifactId>
             <version>1.7.7</version>
+        </dependency>
+        <dependency>
+            <groupId>me.confuser</groupId>
+            <artifactId>BarAPI</artifactId>
+            <version>3.0</version>
         </dependency>
     </dependencies>
 </project>

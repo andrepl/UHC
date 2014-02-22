@@ -4,6 +4,10 @@ main: ${project.main}
 authors: ${project.authors}
 
 commands:
+  uhc:
+    usage: /uhc [start|end]
+    permission: uhc.commands.uhc
+
   team:
     usage: /team <teamname>
     permission: uhc.commands.team

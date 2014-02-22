@@ -1,6 +1,8 @@
 package com.norcode.bukkit.uhc;
 
 import com.norcode.bukkit.uhc.command.TeamCommand;
+import com.norcode.bukkit.uhc.command.UHCCommand;
+import com.norcode.bukkit.uhc.phase.PreGame;
 import com.wimbli.WorldBorder.Config;
 import com.wimbli.WorldBorder.WorldBorder;
 import com.wimbli.WorldBorder.WorldFillTask;
@@ -34,8 +36,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private PlayerListener playerListener;
 	private int teamSize = 1;
 	private int gameLength = 60;
-	private GameTimer gameTimer = null;
-
+	private Game game = null;
 	private HashMap<String, String> teamCaptains = new HashMap<String, String>();
 	private boolean pregame = true;
 
@@ -54,14 +55,13 @@ public class UHC extends JavaPlugin implements Listener {
 		setupCommands();
 		reflectWB();
 		setupScoreboards();
-		gameTimer = new GameTimer(this);
-		gameTimer.runTaskTimer(this, 20, 20);
 		playerListener = new PlayerListener(this);
 
 	}
 
 	private void setupCommands() {
 		new TeamCommand(this);
+		new UHCCommand(this);
 	}
 
 	private void setupScoreboards() {
@@ -183,20 +183,19 @@ public class UHC extends JavaPlugin implements Listener {
 		return mainScoreboard;
 	}
 
-	public boolean isPregame() {
-		return pregame == true;
-	}
-
 	public Scoreboard getScoreboard(Player player) {
-		if (isPregame()) {
+		if (game == null) {
+			return null;
+		}
+		if (game.getCurrentPhase() instanceof PreGame) {
 			return teamScoreboard;
 		} else {
 			return mainScoreboard;
 		}
 	}
 
-	public GameTimer getGameTimer() {
-		return gameTimer;
+	public Game getGame() {
+		return game;
 	}
 
 	public int getTeamSize() {
@@ -206,5 +205,10 @@ public class UHC extends JavaPlugin implements Listener {
 	public void checkReady() {
 		// TODO: Check if the game is ready to be started (all players are teamed up)
 		// TODO: and start the match if its time.
+	}
+
+	public void startGame() {
+		game = new Game(this);
+		game.start();
 	}
 }
