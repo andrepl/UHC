@@ -2,6 +2,7 @@ package com.norcode.bukkit.uhc.phase;
 
 import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.UHC;
+import org.bukkit.Difficulty;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,12 @@ public class MainGame extends Phase {
 			p.sendMessage("UHC Has Begun!");
 			p.setScoreboard(plugin.getMainScoreboard());
 		}
+		World world = plugin.getUHCWorld();
+		world.setDifficulty(Difficulty.HARD);
+		world.setGameRuleValue("doDaylightCycle", "true");
+		world.setTime(800);
+		world.setPVP(true);
+
 		for (World w: plugin.getServer().getWorlds()) {
 			w.setGameRuleValue("naturalRegeneration", "false");
 		}
