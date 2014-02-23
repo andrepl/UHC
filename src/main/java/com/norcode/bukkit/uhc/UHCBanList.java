@@ -65,6 +65,7 @@ public class UHCBanList {
 
 	public UHCBanList(UHC plugin) {
 		this.plugin = plugin;
+		this.bans = new HashMap<String, Ban>();
 	}
 
 	private Date parseDate(String ds) {
