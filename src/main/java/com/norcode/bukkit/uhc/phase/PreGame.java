@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 
 public class PreGame extends Phase {
 
@@ -50,5 +51,10 @@ public class PreGame extends Phase {
 			return;
 		}
 		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game in progress unless you were registered in pre-game.");
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onServerListPingEvent(ServerListPingEvent event) {
+		event.setMotd("Pre-Game In Progress");
 	}
 }

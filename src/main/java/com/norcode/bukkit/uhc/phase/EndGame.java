@@ -4,6 +4,7 @@ import com.norcode.bukkit.uhc.UHC;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 
 public class EndGame extends Phase {
 
@@ -32,5 +33,10 @@ public class EndGame extends Phase {
 			return;
 		}
 		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game currently in end game");
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onServerListPingEvent(ServerListPingEvent event) {
+		event.setMotd("End Game In Progress");
 	}
 }
