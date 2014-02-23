@@ -13,6 +13,7 @@ friendly-fire-protection-seconds: 30
 pregame-phase-seconds: 300
 main-phase-seconds: 1800
 endgame-phase-seconds: 300
+<<<<<<< HEAD
 starter-kit:
   inventory: []
   helmet:
@@ -21,3 +22,6 @@ starter-kit:
   boots:
 
 goal-schematic: 'goals/beacon.schematic'
+=======
+starter-kit: []
+>>>>>>> 5f7024c56dd7ddfe593bda99c7818e6f76b41490

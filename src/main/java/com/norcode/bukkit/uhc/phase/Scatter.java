@@ -4,8 +4,10 @@ import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.Kit;
 import com.norcode.bukkit.uhc.UHC;
 import com.wimbli.WorldBorder.BorderData;
+import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -52,6 +54,10 @@ public class Scatter extends Phase {
 			xWise = true;
 			sliceSize = (bd.getRadiusX() * 2) / teamCount;
 		}
+		World world = plugin.getUHCWorld();
+		world.setDifficulty(Difficulty.PEACEFUL);
+		world.setGameRuleValue("doDaylightCycle", "false");
+		world.setTime(800);
 		spawnerTask = new BukkitRunnable() {
 			@Override
 			public void run() {

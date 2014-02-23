@@ -64,6 +64,7 @@ public class UHC extends JavaPlugin implements Listener {
 		setupIcons();
 		loadConfig();
 		setupCommands();
+		setupIcons();
 		setupScoreboards();
 		getBanList();
 		playerListener = new PlayerListener(this);
