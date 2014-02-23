@@ -39,5 +39,7 @@ public class GameSetup extends Phase {
 	@EventHandler(ignoreCancelled = true)
 	public void onServerListPingEvent(ServerListPingEvent event) {
 		event.setMotd("Game Setup In Progress");
+		event.setServerIcon(plugin.getPhaseIcon(GameSetup.class));
 	}
+
 }

@@ -9,4 +9,8 @@ environment: NORMAL
 world-seed: -123123123123
 generate-structures: true
 world-name: "UHCWorld"
+friendly-fire-protection-seconds: 30
+pregame-phase-seconds: 300
+main-phase-seconds: 1800
+endgame-phase-seconds: 300
 starter-kit: []

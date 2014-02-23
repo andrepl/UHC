@@ -5,6 +5,7 @@ import com.norcode.bukkit.uhc.command.UHCCommand;
 import com.norcode.bukkit.uhc.phase.EndGame;
 import com.norcode.bukkit.uhc.phase.GameSetup;
 import com.norcode.bukkit.uhc.phase.MainGame;
+import com.norcode.bukkit.uhc.phase.Phase;
 import com.norcode.bukkit.uhc.phase.PreGame;
 import com.norcode.bukkit.uhc.phase.Scatter;
 import com.wimbli.WorldBorder.WorldBorder;
@@ -23,8 +24,14 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.CachedServerIcon;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class UHC extends JavaPlugin implements Listener {
 
@@ -32,6 +39,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private int teamIdx = 0;
 
 	private List<ChatColor> colors = new ArrayList<ChatColor>();
+	private HashMap<Class<? extends Phase>, CachedServerIcon> phaseIcons = new HashMap<Class<? extends Phase>, CachedServerIcon>();
 	private Scoreboard teamScoreboard;
 	private Scoreboard mainScoreboard;
 	private PlayerListener playerListener;
@@ -40,6 +48,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private HashMap<String, String> teamCaptains = new HashMap<String, String>();
 	private HashMap<String, Location> teamSpawnLocations = new HashMap<String, Location>();
 	private WorldSetup worldSetup;
+	private UHCBanList banList;
 
 	public OfflinePlayer getTeamCaptain(String team) {
 		String name = teamCaptains.get(team);
@@ -54,7 +63,9 @@ public class UHC extends JavaPlugin implements Listener {
 		saveDefaultConfig();
 		loadConfig();
 		setupCommands();
+		setupIcons();
 		setupScoreboards();
+		getBanList();
 		playerListener = new PlayerListener(this);
 		for (ChatColor c: ChatColor.values()) {
 			if (c == ChatColor.RESET
@@ -69,8 +80,23 @@ public class UHC extends JavaPlugin implements Listener {
 		}
 	}
 
-	public void findSpawnLocations() {
-
+	private void setupIcons() {
+		saveResource("icons/phase-setup.png", false);
+		saveResource("icons/phase-pregame.png", false);
+		saveResource("icons/phase-scatter.png", false);
+		saveResource("icons/phase-main.png", false);
+		saveResource("icons/phase-endgame.png", false);
+		saveResource("icons/nogame.png", false);
+		try {
+			phaseIcons.put(GameSetup.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-setup.png")));
+			phaseIcons.put(PreGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-pregame.png")));
+			phaseIcons.put(Scatter.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-scatter.png")));
+			phaseIcons.put(MainGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-main.png")));
+			phaseIcons.put(EndGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-endgame.png")));
+			phaseIcons.put(null, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/nogame.png")));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void setupCommands() {
@@ -96,7 +122,7 @@ public class UHC extends JavaPlugin implements Listener {
 	}
 
 	public void loadConfig() {
-		//teamSize = getConfig().getInt("team-size", 1);
+
 		String worldName = getConfig().getString("world-name");
 		worldSetup = new WorldSetup(this, worldName);
 	}
@@ -117,7 +143,6 @@ public class UHC extends JavaPlugin implements Listener {
 		team.setSuffix(ChatColor.RESET.toString());
 		team.addPlayer(captain);
 		teamCaptains.put(slug, captain.getName());
-
 
 		Score s = teamScoreboard.getObjective("members").getScore(Bukkit.getOfflinePlayer(slug));
 		s.setScore(1);
@@ -171,11 +196,6 @@ public class UHC extends JavaPlugin implements Listener {
 		return getConfig().getInt("team-size");
 	}
 
-	public void checkReady() {
-		// TODO: Check if the game is ready to be started (all players are teamed up)
-		// TODO: and start the match if its time.
-	}
-
 	public void startGame() {
 		game = new Game(this);
 		game.addPhase(new PreGame(this));
@@ -219,4 +239,20 @@ public class UHC extends JavaPlugin implements Listener {
 		return false;
 	}
 
+	public CachedServerIcon getPhaseIcon(Class<? extends Phase> phaseClass) {
+		return phaseIcons.get(phaseClass);
+	}
+
+	public UHCBanList getBanList() {
+		if (banList == null) {
+			banList = new UHCBanList(this);
+			File file = new File(getDataFolder(), "bans.tsv");
+			if (file.exists()) {
+				banList.loadFile(file);
+			} else {
+				getLogger().warning("No bans.tsv found. export this google doc: https://docs.google.com/spreadsheet/ccc?key=0AjACyg1Jc3_GdEhqWU5PTEVHZDVLYWphd2JfaEZXd2c#gid=0");
+			}
+		}
+		return banList;
+	}
 }
