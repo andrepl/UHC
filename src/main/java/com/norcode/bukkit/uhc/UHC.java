@@ -24,9 +24,7 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class UHC extends JavaPlugin implements Listener {
 
@@ -205,4 +203,20 @@ public class UHC extends JavaPlugin implements Listener {
 	public World getUHCWorld() {
 		return getServer().getWorld(getConfig().getString("world-name"));
 	}
+
+	public boolean isPlayerAllowed(Player p){
+		Set<Team> teams = this.getMainScoreboard().getTeams();
+		Set<OfflinePlayer> allowedPlayers = new HashSet<OfflinePlayer>();
+		for (Team team: teams) {
+			for (OfflinePlayer player: team.getPlayers()) {
+				allowedPlayers.add(player);
+			}
+		}
+		OfflinePlayer op = (OfflinePlayer) p;
+		if(allowedPlayers.contains(op)) {
+			return true;
+		}
+		return false;
+	}
+
 }

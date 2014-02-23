@@ -2,6 +2,8 @@ package com.norcode.bukkit.uhc.phase;
 
 import com.norcode.bukkit.uhc.UHC;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerLoginEvent;
 
 public class EndGame extends Phase {
 
@@ -22,5 +24,13 @@ public class EndGame extends Phase {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.sendMessage("Endgame is over.");
 		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerLogin(PlayerLoginEvent event) {
+		if (event.getPlayer().hasPermission("uhc.staff")) {
+			return;
+		}
+		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game currently in end game");
 	}
 }

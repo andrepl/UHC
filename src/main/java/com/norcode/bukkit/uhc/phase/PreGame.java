@@ -5,6 +5,7 @@ import com.norcode.bukkit.uhc.UHC;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 
 public class PreGame extends Phase {
 
@@ -38,5 +39,16 @@ public class PreGame extends Phase {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.sendMessage("Pre-game is over.");
 		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerLogin(PlayerLoginEvent event) {
+		if (event.getPlayer().hasPermission("uhc.staff")) {
+			return;
+		}
+		if (plugin.isPlayerAllowed(event.getPlayer())) {
+			return;
+		}
+		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game in progress unless you were registered in pre-game.");
 	}
 }
