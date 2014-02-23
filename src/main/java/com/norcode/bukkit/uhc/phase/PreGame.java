@@ -12,7 +12,7 @@ public class PreGame extends Phase {
 
 	public PreGame(UHC plugin) {
 		super(plugin, "Pre-Game");
-		this.duration = 1000 * 30;
+		this.duration = plugin.getConfig().getInt("pregame-phase-seconds", 10*60) * 1000;
 	}
 
 	@Override

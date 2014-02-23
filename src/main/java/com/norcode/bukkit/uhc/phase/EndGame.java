@@ -10,7 +10,7 @@ public class EndGame extends Phase {
 
 	public EndGame(UHC plugin) {
 		super(plugin, "End-Game");
-		this.duration = 1000* 30;
+		this.duration = plugin.getConfig().getInt("endgame-phase-seconds", 10*60) * 1000;
 	}
 
 	@Override
