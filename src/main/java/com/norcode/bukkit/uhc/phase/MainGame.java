@@ -54,6 +54,6 @@ public class MainGame extends Phase {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onServerListPingEvent(ServerListPingEvent event) {
-		//need to update status here of the match.
+		event.setMotd("Main Game In Progress");
 	}
 }
