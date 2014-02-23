@@ -48,6 +48,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private HashMap<String, String> teamCaptains = new HashMap<String, String>();
 	private HashMap<String, Location> teamSpawnLocations = new HashMap<String, Location>();
 	private WorldSetup worldSetup;
+	private UHCBanList banList;
 
 	public OfflinePlayer getTeamCaptain(String team) {
 		String name = teamCaptains.get(team);
@@ -64,6 +65,7 @@ public class UHC extends JavaPlugin implements Listener {
 		setupCommands();
 		setupIcons();
 		setupScoreboards();
+		getBanList();
 		playerListener = new PlayerListener(this);
 		for (ChatColor c: ChatColor.values()) {
 			if (c == ChatColor.RESET
@@ -118,7 +120,7 @@ public class UHC extends JavaPlugin implements Listener {
 	}
 
 	public void loadConfig() {
-		//teamSize = getConfig().getInt("team-size", 1);
+
 		String worldName = getConfig().getString("world-name");
 		worldSetup = new WorldSetup(this, worldName);
 	}
@@ -139,7 +141,6 @@ public class UHC extends JavaPlugin implements Listener {
 		team.setSuffix(ChatColor.RESET.toString());
 		team.addPlayer(captain);
 		teamCaptains.put(slug, captain.getName());
-
 
 		Score s = teamScoreboard.getObjective("members").getScore(Bukkit.getOfflinePlayer(slug));
 		s.setScore(1);
@@ -193,11 +194,6 @@ public class UHC extends JavaPlugin implements Listener {
 		return getConfig().getInt("team-size");
 	}
 
-	public void checkReady() {
-		// TODO: Check if the game is ready to be started (all players are teamed up)
-		// TODO: and start the match if its time.
-	}
-
 	public void startGame() {
 		game = new Game(this);
 		game.addPhase(new PreGame(this));
@@ -243,5 +239,18 @@ public class UHC extends JavaPlugin implements Listener {
 
 	public CachedServerIcon getPhaseIcon(Class<? extends Phase> phaseClass) {
 		return phaseIcons.get(phaseClass);
+	}
+
+	public UHCBanList getBanList() {
+		if (banList == null) {
+			banList = new UHCBanList(this);
+			File file = new File(getDataFolder(), "bans.tsv");
+			if (file.exists()) {
+				banList.loadFile(file);
+			} else {
+				getLogger().warning("No bans.tsv found. export this google doc: https://docs.google.com/spreadsheet/ccc?key=0AjACyg1Jc3_GdEhqWU5PTEVHZDVLYWphd2JfaEZXd2c#gid=0");
+			}
+		}
+		return banList;
 	}
 }

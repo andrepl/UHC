@@ -235,7 +235,6 @@ public class TeamCommand extends BaseCommand {
 			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
 			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
 			score.setScore(score.getScore() + 1);
-			((UHC) plugin).checkReady();
 		}
 	}
 }
