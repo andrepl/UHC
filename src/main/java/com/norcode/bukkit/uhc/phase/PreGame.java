@@ -21,6 +21,7 @@ public class PreGame extends Phase {
 		int durationSeconds = (int) (getDuration()/ 1000);
 		int secondsRemaining = durationSeconds - secondsElapsed;
 		return "UHC Begins in " + formatSecondsRemaining(secondsRemaining);
+
 	}
 
 	@Override
@@ -56,5 +57,6 @@ public class PreGame extends Phase {
 	@EventHandler(ignoreCancelled = true)
 	public void onServerListPingEvent(ServerListPingEvent event) {
 		event.setMotd("Pre-Game In Progress");
+		event.setServerIcon(plugin.getPhaseIcon(PreGame.class));
 	}
 }

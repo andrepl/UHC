@@ -79,6 +79,7 @@ public class MainGame extends Phase {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onServerListPingEvent(ServerListPingEvent event) {
-		event.setMotd("Main Game In Progress");
+		event.setMotd("UHC In Progress");
+		event.setServerIcon(plugin.getPhaseIcon(MainGame.class));
 	}
 }

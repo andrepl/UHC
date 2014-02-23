@@ -14,7 +14,10 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -164,6 +167,29 @@ public class Scatter extends Phase {
 		player.teleport(loc);
 		player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 10));
 		starterKit.give(player);
+	}
+
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerLogin(PlayerLoginEvent event) {
+		if (event.getPlayer().hasPermission("uhc.staff")) {
+			return;
+		}
+		if (plugin.isPlayerAllowed(event.getPlayer())) {
+			return;
+		}
+		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game in progress unless you were registered in pre-game.");
+	}
+
+	@EventHandler(ignoreCancelled =true)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		event.getPlayer().setScoreboard(plugin.getMainScoreboard());
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onServerListPingEvent(ServerListPingEvent event) {
+		event.setMotd("UHC In Progress");
+		event.setServerIcon(plugin.getPhaseIcon(PreGame.class));
 	}
 
 	@EventHandler(ignoreCancelled=true)

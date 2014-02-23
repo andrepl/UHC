@@ -5,6 +5,7 @@ import com.norcode.bukkit.uhc.command.UHCCommand;
 import com.norcode.bukkit.uhc.phase.EndGame;
 import com.norcode.bukkit.uhc.phase.GameSetup;
 import com.norcode.bukkit.uhc.phase.MainGame;
+import com.norcode.bukkit.uhc.phase.Phase;
 import com.norcode.bukkit.uhc.phase.PreGame;
 import com.norcode.bukkit.uhc.phase.Scatter;
 import com.wimbli.WorldBorder.WorldBorder;
@@ -23,8 +24,14 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.CachedServerIcon;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class UHC extends JavaPlugin implements Listener {
 
@@ -32,6 +39,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private int teamIdx = 0;
 
 	private List<ChatColor> colors = new ArrayList<ChatColor>();
+	private HashMap<Class<? extends Phase>, CachedServerIcon> phaseIcons = new HashMap<Class<? extends Phase>, CachedServerIcon>();
 	private Scoreboard teamScoreboard;
 	private Scoreboard mainScoreboard;
 	private PlayerListener playerListener;
@@ -54,6 +62,7 @@ public class UHC extends JavaPlugin implements Listener {
 		saveDefaultConfig();
 		loadConfig();
 		setupCommands();
+		setupIcons();
 		setupScoreboards();
 		playerListener = new PlayerListener(this);
 		for (ChatColor c: ChatColor.values()) {
@@ -69,8 +78,21 @@ public class UHC extends JavaPlugin implements Listener {
 		}
 	}
 
-	public void findSpawnLocations() {
-
+	private void setupIcons() {
+		saveResource("icons/phase-setup.png", false);
+		saveResource("icons/phase-pregame.png", false);
+		saveResource("icons/phase-scatter.png", false);
+		saveResource("icons/phase-main.png", false);
+		saveResource("icons/phase-endgame.png", false);
+		try {
+			phaseIcons.put(GameSetup.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-setup.png")));
+			phaseIcons.put(PreGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-pregame.png")));
+			phaseIcons.put(Scatter.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-scatter.png")));
+			phaseIcons.put(MainGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-main.png")));
+			phaseIcons.put(EndGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-endgame.png")));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void setupCommands() {
@@ -219,4 +241,7 @@ public class UHC extends JavaPlugin implements Listener {
 		return false;
 	}
 
+	public CachedServerIcon getPhaseIcon(Class<? extends Phase> phaseClass) {
+		return phaseIcons.get(phaseClass);
+	}
 }
