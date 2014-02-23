@@ -86,12 +86,14 @@ public class UHC extends JavaPlugin implements Listener {
 		saveResource("icons/phase-scatter.png", false);
 		saveResource("icons/phase-main.png", false);
 		saveResource("icons/phase-endgame.png", false);
+		saveResource("icons/nogame.png", false);
 		try {
 			phaseIcons.put(GameSetup.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-setup.png")));
 			phaseIcons.put(PreGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-pregame.png")));
 			phaseIcons.put(Scatter.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-scatter.png")));
 			phaseIcons.put(MainGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-main.png")));
 			phaseIcons.put(EndGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-endgame.png")));
+			phaseIcons.put(null, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/nogame.png")));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

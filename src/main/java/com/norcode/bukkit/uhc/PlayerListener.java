@@ -27,15 +27,13 @@ public class PlayerListener implements Listener {
 	@EventHandler(ignoreCancelled=true, priority = EventPriority.LOW)
 	public void onPing(ServerListPingEvent event) {
 		event.setMotd("No Game");
+		event.setServerIcon(plugin.getPhaseIcon(null));
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onPlayerLogin(PlayerLoginEvent event) {
 		if (plugin.getGame() == null && !event.getPlayer().hasPermission("uhc.staff")) {
 			event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "Sorry, the game isn't ready yet.");
-		}
-		if (plugin.getBanList().isPlayerBanned(event.getPlayer())) {
-
 		}
 	}
 }
