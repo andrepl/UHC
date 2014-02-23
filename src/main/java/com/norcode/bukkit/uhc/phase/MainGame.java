@@ -1,7 +1,7 @@
 package com.norcode.bukkit.uhc.phase;
 
+import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.UHC;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,9 +9,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.scoreboard.Team;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class MainGame extends Phase {
 	private long friendFireDisabledTime = -1;
