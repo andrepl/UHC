@@ -61,9 +61,9 @@ public class UHC extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		saveDefaultConfig();
+		setupIcons();
 		loadConfig();
 		setupCommands();
-		setupIcons();
 		setupScoreboards();
 		getBanList();
 		playerListener = new PlayerListener(this);
@@ -87,6 +87,7 @@ public class UHC extends JavaPlugin implements Listener {
 		saveResource("icons/phase-main.png", false);
 		saveResource("icons/phase-endgame.png", false);
 		saveResource("icons/nogame.png", false);
+		saveResource("goals/beacon.schematic", false);
 		try {
 			phaseIcons.put(GameSetup.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-setup.png")));
 			phaseIcons.put(PreGame.class, Bukkit.loadServerIcon(new File(getDataFolder(), "icons/phase-pregame.png")));

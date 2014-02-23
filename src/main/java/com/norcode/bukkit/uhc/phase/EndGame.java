@@ -18,6 +18,7 @@ public class EndGame extends Phase {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.sendMessage("It's now Endgame.");
 		}
+		plugin.getWorldSetup().getGoal().dropWalls();
 	}
 
 	@Override

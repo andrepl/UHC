@@ -9,11 +9,15 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Random;
 
 public class WorldSetup extends BukkitRunnable {
 
 	private UHC plugin;
+	private Goal goal;
 	private String worldName;
 	private Field reportTotalField;
 	private Field reportNumField;
@@ -21,11 +25,31 @@ public class WorldSetup extends BukkitRunnable {
 	private boolean generationStarted = false;
 	private boolean complete = false;
 	private WallBuilder wallBuilder;
-
+	private Random random = new Random();
 	public WorldSetup(UHC plugin, String worldName) {
+
 		this.plugin = plugin;
 		this.worldName = worldName;
 		reflectWB();
+	}
+
+	private void setupGoal() {
+		File file = new File(plugin.getDataFolder(), plugin.getConfig().getString("goal-schematic"));
+		Schematic schematic = null;
+		try {
+			schematic = Schematic.fromFile(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		goal = new Goal(schematic);
+		World world = plugin.getUHCWorld();
+		Location loc = world.getSpawnLocation();
+		loc = new Location(world, loc.getBlockX(), world.getHighestBlockYAt(loc), loc.getBlockZ());
+		goal.setLocation(loc);
+	}
+
+	public Goal getGoal() {
+		return goal;
 	}
 
 	private void reflectWB() {
@@ -41,13 +65,30 @@ public class WorldSetup extends BukkitRunnable {
 		}
 	}
 
+	private char[] chars = new char[] {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+									   'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+									   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+									   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+									   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '!', '?', '.'};
+
+	private String randomString(int size) {
+		StringBuilder sb = new StringBuilder();
+		for (int i=0; i<size; i++) {
+			sb.append(chars[random.nextInt(chars.length)]);
+		}
+		return sb.toString();
+	}
+
 	public void start() {
 		WorldCreator creator = new WorldCreator(worldName);
 		creator.type(WorldType.valueOf(plugin.getConfig().getString("world-type", "NORMAL")));
 		creator.environment(World.Environment.valueOf(plugin.getConfig().getString("environment", "NORMAL")));
 		creator.generateStructures(plugin.getConfig().getBoolean("generate-structures"));
 		long seed;
-		String seedString = plugin.getConfig().getString("world-seed");
+		String seedString = plugin.getConfig().getString("world-seed", null);
+		if (seedString == null) {
+			seedString = randomString(64);
+		}
 		try {
 			seed = Long.parseLong(seedString);
 		} catch (IllegalArgumentException ex) {
@@ -57,11 +98,12 @@ public class WorldSetup extends BukkitRunnable {
 		}
 		creator.seed(seed);
 		World world = creator.createWorld();
+		setupGoal();
 		int sizeX = plugin.getConfig().getInt("size.x");
 		int sizeZ = plugin.getConfig().getInt("size.z");
 		setupBorder(sizeX, sizeZ);
 		startWorldGeneration();
-		this.runTaskTimer(plugin, 20*10, 20*10);
+		this.runTaskTimer(plugin, 20, 20);
 	}
 
 
@@ -120,12 +162,12 @@ public class WorldSetup extends BukkitRunnable {
 			}
 			if (borderComplete()) {
 				this.cancel();
+				this.goal.build();
 				plugin.getLogger().info("World Setup is complete.");
 				complete = true;
 				return;
 			}
 		}
-		plugin.getLogger().info("World Setup is " + getPercentage() + "% complete.");
 	}
 
 	private boolean borderComplete() {

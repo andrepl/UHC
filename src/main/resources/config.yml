@@ -2,15 +2,22 @@ size:
   x: 1000
   z: 1000
 
-team-size: 2
 
+team-size: 2
 world-type: NORMAL
 environment: NORMAL
-world-seed: -123123123123
+world-seed:
 generate-structures: true
 world-name: "UHCWorld"
 friendly-fire-protection-seconds: 30
 pregame-phase-seconds: 300
 main-phase-seconds: 1800
 endgame-phase-seconds: 300
-starter-kit: []
+starter-kit:
+  inventory: []
+  helmet:
+  chestplate:
+  leggings:
+  boots:
+
+goal-schematic: 'goals/beacon.schematic'
