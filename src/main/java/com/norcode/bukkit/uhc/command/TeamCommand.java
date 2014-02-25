@@ -6,15 +6,12 @@ import com.norcode.bukkit.uhc.UHCError;
 import com.norcode.bukkit.uhc.chat.ClickAction;
 import com.norcode.bukkit.uhc.chat.Text;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
@@ -76,34 +73,31 @@ public class TeamCommand extends BaseCommand {
 				throw new CommandError("You can only leave a team during pre-game.");
 			}
 			Team team = ((UHC) plugin).getMainScoreboard().getPlayerTeam((Player) commandSender);
-			commandSender.sendMessage("You have left the team.");
-			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
-			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
-			OfflinePlayer capn = ((UHC) plugin).getTeamCaptain(team.getName());
-
 			if (team == null) {
 				throw new CommandError("You are not on a team.");
 			}
-			if (commandSender.getName().equals(capn.getName())) {
-				//disband the entire team if the captain leaves.
-				for (OfflinePlayer p : team.getPlayers()) {
-					team.removePlayer(p);
-					if (p.isOnline()) {
-						Player onlinePlayer = (Player) p;
-						onlinePlayer.sendMessage("Your team has been disbanded.");
-					}
-				}
-				((UHC) plugin).getTeamScoreboard().resetScores(Bukkit.getOfflinePlayer(team.getName()));
-				team.unregister();
-				return;
-			}
-			team.removePlayer(((Player) commandSender).getPlayer());
-
-			score.setScore(score.getScore() - 1);
-			if (capn.isOnline()) {
-				Player onlineCaptain = (Player) capn;
-				onlineCaptain.sendMessage(((Player) commandSender).getPlayerListName() + " has left your team.");
-			}
+//			plugin.leaveTeam()
+//			if (commandSender.getName().equals(capn.getName())) {
+//				//disband the entire team if the captain leaves.
+//				for (OfflinePlayer p : team.getPlayers()) {
+//					team.removePlayer(p);
+//					if (p.isOnline()) {
+//						Player onlinePlayer = (Player) p;
+//						onlinePlayer.sendMessage("Your team has been disbanded.");
+//					}
+//				}
+//				((UHC) plugin).getTeamScoreboard().resetScores(Bukkit.getOfflinePlayer(team.getName()));
+//				commandSender.sendMessage("You have left the team.");
+//				team.unregister();
+//				return;
+//			}
+//			team.removePlayer(((Player) commandSender).getPlayer());
+//
+//			score.setScore(score.getScore() - 1);
+//			if (capn.isOnline()) {
+//				Player onlineCaptain = (Player) capn;
+//				onlineCaptain.sendMessage(((Player) commandSender).getPlayerListName() + " has left your team.");
+//			}
 		}
 	}
 
@@ -207,34 +201,18 @@ public class TeamCommand extends BaseCommand {
 				throw new CommandError("You can only join a team during pre-game.");
 			}
 			Player player = ((Player) sender);
-			Team onTeam = ((UHC) plugin).getMainScoreboard().getPlayerTeam(player);
-			if (onTeam != null) {
-				throw new CommandError("You are already on a team!");
+			Team team = null;
+			try {
+				team = ((UHC) plugin).joinTeam(player, args.peek(), true);
+			} catch (UHCError e) {
+				throw new CommandError(e.getMessage());
 			}
-			Team team = ((UHC) plugin).getMainScoreboard().getTeam(args.peek());
-			if (team == null) {
-				throw new CommandError("Unknown Team: " + args.peek());
-			}
-			if (!player.hasMetadata("teamInvites")) {
-				throw new CommandError("You have not been invited to join " + team.getDisplayName());
-			}
-			List<String> invites = (List<String>) player.getMetadata("teamInvites").get(0).value();
-			if (!invites.contains(team.getName())) {
-				throw new CommandError("You have not been invited to join " + team.getDisplayName());
-			}
-			if (team.getSize() == ((UHC) plugin).getTeamSize()) {
-				throw new CommandError("That team already has the maximum number of players.");
-			}
-			team.addPlayer(player);
 			sender.sendMessage("You have joined " + team.getDisplayName());
 			for (OfflinePlayer op : team.getPlayers()) {
 				if (op.isOnline()) {
 					op.getPlayer().sendMessage(player.getName() + " has joined the team.");
 				}
 			}
-			Objective teamMemberObjective = ((UHC) plugin).getTeamScoreboard().getObjective("members");
-			Score score = teamMemberObjective.getScore(Bukkit.getOfflinePlayer(team.getName()));
-			score.setScore(score.getScore() + 1);
 		}
 	}
 }

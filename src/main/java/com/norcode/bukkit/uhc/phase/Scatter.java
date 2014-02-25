@@ -18,13 +18,14 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
+import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -32,8 +33,7 @@ public class Scatter extends Phase {
 	private Random rand;
 	int teamCount;
 	LinkedList<Team> teams;
-	boolean xWise;
-	int sliceSize;
+	int sliceCount = 16;
 	long delayUntil = 0;
 	BukkitRunnable spawnerTask;
 	private Kit starterKit;
@@ -49,11 +49,6 @@ public class Scatter extends Phase {
 		teams = new LinkedList<Team>(plugin.getMainScoreboard().getTeams());
 		teamCount = teams.size();
 		BorderData bd = plugin.getWorldSetup().getBorderData();
-		xWise = false;
-		if (bd.getRadiusX() > bd.getRadiusZ()) {
-			xWise = true;
-			sliceSize = (bd.getRadiusX() * 2) / teamCount;
-		}
 		World world = plugin.getUHCWorld();
 		world.setDifficulty(Difficulty.PEACEFUL);
 		world.setGameRuleValue("doDaylightCycle", "false");
@@ -68,6 +63,7 @@ public class Scatter extends Phase {
 				if (teams.size() == 0) {
 					plugin.getLogger().info("Spawner Task Finished.");
 					this.cancel();
+					return;
 				}
 
 				if (trySpawn()) {
@@ -83,24 +79,88 @@ public class Scatter extends Phase {
 		return teamCount - teams.size();
 	}
 
+
+	public int getSlice(Location l) {
+		Location spawn = l.getWorld().getSpawnLocation();
+		Vector v = l.toVector().subtract(spawn.toVector());
+		float angle = v.angle(new Vector(spawn.getBlockX() + 1000000, spawn.getBlockY(), spawn.getBlockZ()));
+		if (l.getBlockZ() < spawn.getBlockZ()) {
+			angle = -angle;
+		}
+		if (angle < 0) {
+			angle = ((float) Math.PI) + ((float) Math.PI - Math.abs(angle));
+		}
+		float sliceSize = (float) (2 * Math.PI / 16f);
+		int s = (int) (angle / sliceSize);
+		plugin.getLogger().info("Angle from " + l.getBlockX() + "," + l.getBlockZ() + " to " + spawn.getBlockX() + "," + spawn.getBlockZ() + " is " + angle + " (slice + " + s + ")");
+		return s;
+	}
+
+	private ArrayList<Integer> occupiedSlices = new ArrayList<Integer>();
+
+	private boolean isTooClose(int slice) {
+		String occ = "Occupied: ";
+		for (int i: occupiedSlices) {
+			occ += i + ",";
+		}
+		plugin.getLogger().info(occ);
+		if (occupiedSlices.contains(slice)) {
+			plugin.getLogger().info("Too Close (slice " + slice + " is already occupied)");
+			return true;
+		}
+		int minEmpty = (16 - teamCount) / teamCount;
+		plugin.getLogger().info("Radius: " + minEmpty);
+		for (int i=1; i<=minEmpty; i++) {
+			int vp = slice+i;
+			int vm = slice-i;
+			if (vp >= 16) {
+				vp = vp - 16;
+			}
+			if (vm < 0) {
+				vm = 16 + vm;
+			}
+
+			if (occupiedSlices.contains(vm)) {
+				plugin.getLogger().info("Too Close (slice " + slice + " is " + i + " away from " + vm + ")");
+				return true;
+			} else if (occupiedSlices.contains(vp)) {
+				plugin.getLogger().info("Too Close (slice " + slice + " is " + i + " away from " + vp + ")");
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private Location getPotentialSpawnLocation() {
-		int idx = getIndex();
 		int minZ = getMinZ();
 		int maxZ = getMaxZ();
 		int minX = getMinX();
 		int maxX = getMaxX();
-		if (xWise) {
-			minX = getMinX() + (sliceSize * idx);
-			maxX = getMaxX() + (sliceSize * (idx+1));
-		} else {
-			minZ = getMinZ() + (sliceSize * idx);
-			maxZ = getMaxZ() + (sliceSize * (idx+1));
+		plugin.getLogger().info("Choosing location in (" + minX + "," + minZ + ") - (" + maxX + "," + maxZ + ")");
+		World w = plugin.getUHCWorld();
+		Location l = null;
+		int tries = 0;
+		while (tries < 1000) {
+			int x = rand.nextInt(maxX - minX) + minX;
+			int z = rand.nextInt(maxZ - minZ) + minZ;
+			l = new Location(w, x, 64, z);
+			Location ws = l.getWorld().getSpawnLocation();
+			plugin.getLogger().info("trying " + l.getBlockX() + "," + l.getBlockZ() + " (spawn is " + ws.getBlockX() + "," + ws.getBlockZ() + ")");
+			int slice = getSlice(l);
+			if (isTooClose(slice)) {
+				l = null;
+				tries ++;
+				continue;
+			}
+			break;
 		}
-		int x = rand.nextInt(maxX - minX) + minX;
-		int z = rand.nextInt(maxZ - minZ) + minZ;
-		plugin.getLogger().info("PotentialSpawnWorld: " + plugin.getUHCWorld());
-		int y = plugin.getUHCWorld().getHighestBlockYAt(x,z);
-		return new Location(plugin.getUHCWorld(), x, y, z);
+		if (l != null) {
+			plugin.getLogger().info("PotentialSpawnWorld: " + plugin.getUHCWorld());
+			int y = plugin.getUHCWorld().getHighestBlockYAt(l);
+			l.setY(y);
+		}
+		return l;
+
 	}
 
 
@@ -114,6 +174,12 @@ public class Scatter extends Phase {
 		if (loc == null) {
 			return false;
 		} else {
+			int minDistance = plugin.getWorldSetup().getBorderData().getRadiusX() / 3; // maybe tweak me?
+
+			if (loc.distance(plugin.getUHCWorld().getSpawnLocation()) < minDistance) {
+				plugin.getLogger().info(loc + " is too close to spawn!");
+				return false;
+			}
 			Block b = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY()-1, loc.getBlockZ()).getBlock();
 			if (!b.getType().isSolid()) {
 				plugin.getLogger().info(b + "is not solid.");
@@ -153,6 +219,7 @@ public class Scatter extends Phase {
 			plugin.getLogger().info(" ... Bad Spawn Location!");
 			return false;
 		}
+		occupiedSlices.add(getSlice(loc));
 		plugin.getLogger().info(" ... Valid! Spawning teammates.");
 		loc = loc.add(0.5, 0.1, 0.5);
 		Team team = teams.pop();
@@ -172,6 +239,8 @@ public class Scatter extends Phase {
 		}
 		player.teleport(loc);
 		player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 10));
+		player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 6));
+		player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, Integer.MAX_VALUE, 128));
 		starterKit.give(player);
 	}
 
@@ -181,7 +250,7 @@ public class Scatter extends Phase {
 		if (event.getPlayer().hasPermission("uhc.staff")) {
 			return;
 		}
-		if (plugin.isPlayerAllowed(event.getPlayer())) {
+		if (plugin.isParticipant(event.getPlayer().getName())) {
 			return;
 		}
 		event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You can't join a game in progress unless you were registered in pre-game.");
@@ -202,15 +271,6 @@ public class Scatter extends Phase {
 	public void onPlayerDrop(PlayerDropItemEvent event) {
 		if (!event.getPlayer().hasPermission("uhc.staff")) {
 			event.setCancelled(true);
-		}
-	}
-
-	@EventHandler(ignoreCancelled=true)
-	public void onPlayerMove(PlayerMoveEvent event) {
-		if (event.getFrom().getWorld().getUID().equals(plugin.getUHCWorld().getUID())) {
-			if (!event.getPlayer().hasPermission("uhc.staff")) {
-				event.setCancelled(true);
-			}
 		}
 	}
 
@@ -253,12 +313,16 @@ public class Scatter extends Phase {
 
 	@Override
 	public void onEnd() {
+		plugin.getLogger().info("Scatter onEnd");
 		for (Player p: plugin.getUHCWorld().getPlayers()) {
-			p.removePotionEffect(PotionEffectType.BLINDNESS);
+			for (PotionEffect effect: p.getActivePotionEffects()) {
+				p.removePotionEffect(effect.getType());
+			}
 			p.setHealth(p.getMaxHealth());
 			p.setSaturation(20);
 			p.setFoodLevel(20);
 		}
+		plugin.getLogger().info("Scatter onEnded");
 	}
 
 	@Override

@@ -11,7 +11,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Random;
 
 public class WorldSetup extends BukkitRunnable {
@@ -19,18 +20,25 @@ public class WorldSetup extends BukkitRunnable {
 	private UHC plugin;
 	private Goal goal;
 	private String worldName;
-	private Field reportTotalField;
-	private Field reportNumField;
-	private Field reportTargetField;
 	private boolean generationStarted = false;
 	private boolean complete = false;
 	private WallBuilder wallBuilder;
 	private Random random = new Random();
-	public WorldSetup(UHC plugin, String worldName) {
+	private FakePlayer fakePlayer;
 
+	private Method reportMethod;
+
+	public WorldSetup(UHC plugin, String worldName) {
+		this.fakePlayer = new FakePlayer(this);
 		this.plugin = plugin;
 		this.worldName = worldName;
-		reflectWB();
+		try {
+			reportMethod = WorldFillTask.class.getDeclaredMethod("reportProgress");
+			reportMethod.setAccessible(true);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+		}
+
 	}
 
 	private void setupGoal() {
@@ -50,19 +58,6 @@ public class WorldSetup extends BukkitRunnable {
 
 	public Goal getGoal() {
 		return goal;
-	}
-
-	private void reflectWB() {
-		try {
-			reportTotalField = WorldFillTask.class.getDeclaredField("reportTotal");
-			reportNumField = WorldFillTask.class.getDeclaredField("reportNum");
-			reportTargetField = WorldFillTask.class.getDeclaredField("reportTarget");
-			reportTotalField.setAccessible(true);
-			reportNumField.setAccessible(true);
-			reportTargetField.setAccessible(true);
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
-		}
 	}
 
 	private char[] chars = new char[] {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -120,7 +115,7 @@ public class WorldSetup extends BukkitRunnable {
 
 	private void startWorldGeneration() {
 		generationStarted = true;
-		Config.fillTask = new WorldFillTask(plugin.getServer(), null, worldName, 208, 1, 1, true);
+		Config.fillTask = new WorldFillTask(plugin.getServer(), fakePlayer, worldName, 208, 10, 1, true);
 		if (Config.fillTask.valid()) {
 			int task = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin.getWorldBorder(), Config.fillTask, 1, 1);
 			Config.fillTask.setTaskID(task);
@@ -128,32 +123,25 @@ public class WorldSetup extends BukkitRunnable {
 	}
 
 	public boolean generationComplete() {
-		boolean genComplete = (Config.fillTask.isPaused() && getGenerationPercentage() == 100);
-		plugin.getLogger().info("is Generation Complete? " + genComplete + " " + getGenerationPercentage() + "%");
-		return genComplete;
+		return fakePlayer.getFillStatus().equals(FakePlayer.FILL_COMPLETE);
 	}
 
 	public int getGenerationPercentage() {
-		int reportTotal;
-		int reportNum;
-		int reportTarget;
-
-		try {
-			reportTotal = (Integer) reportTotalField.get(Config.fillTask);
-			reportNum = (Integer) reportNumField.get(Config.fillTask);
-			reportTarget = (Integer) reportTargetField.get(Config.fillTask);
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-			return -1;
-		}
-
-		double perc = ((double)(reportTotal + reportNum) / (double)reportTarget) * 100;
-		if (perc > 100) perc = 100;
-		return (int) perc;
+		return fakePlayer.getFillPercentage();
 	}
+
 
 	@Override
 	public void run() {
+		if (reportMethod != null) {
+			try {
+				reportMethod.invoke(Config.fillTask);
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+			}
+		}
 		if (generationComplete()) {
 			if (wallBuilder == null) {
 				wallBuilder = new WallBuilder(plugin, plugin.getServer().getWorld(worldName));

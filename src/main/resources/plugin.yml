@@ -13,6 +13,9 @@ commands:
     permission: uhc.commands.team
     description: create a team
 
+  scratch:
+    usage: /scratch
+    permission: uhc.staff
 
 permissions:
   uhc.commands.team:

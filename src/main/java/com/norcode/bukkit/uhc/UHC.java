@@ -1,5 +1,6 @@
 package com.norcode.bukkit.uhc;
 
+import com.norcode.bukkit.uhc.command.ScratchCommand;
 import com.norcode.bukkit.uhc.command.TeamCommand;
 import com.norcode.bukkit.uhc.command.UHCCommand;
 import com.norcode.bukkit.uhc.phase.EndGame;
@@ -11,6 +12,7 @@ import com.norcode.bukkit.uhc.phase.Scatter;
 import com.wimbli.WorldBorder.WorldBorder;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -29,9 +31,7 @@ import org.bukkit.util.CachedServerIcon;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class UHC extends JavaPlugin implements Listener {
 
@@ -58,6 +58,10 @@ public class UHC extends JavaPlugin implements Listener {
 		return null;
 	}
 
+	public World getLobbyWorld() {
+		return getServer().getWorlds().get(0);
+	}
+
 	@Override
 	public void onEnable() {
 		saveDefaultConfig();
@@ -67,6 +71,7 @@ public class UHC extends JavaPlugin implements Listener {
 		setupIcons();
 		setupScoreboards();
 		getBanList();
+		setupLobbyWorld();
 		playerListener = new PlayerListener(this);
 		for (ChatColor c: ChatColor.values()) {
 			if (c == ChatColor.RESET
@@ -79,6 +84,14 @@ public class UHC extends JavaPlugin implements Listener {
 			}
 			colors.add(c);
 		}
+	}
+
+	private void setupLobbyWorld() {
+		World world = getLobbyWorld();
+		world.setDifficulty(Difficulty.PEACEFUL);
+		world.setGameRuleValue("doDaylightCycle", "false");
+		world.setTime(800);
+		world.setPVP(false);
 	}
 
 	private void setupIcons() {
@@ -104,6 +117,7 @@ public class UHC extends JavaPlugin implements Listener {
 	private void setupCommands() {
 		new TeamCommand(this);
 		new UHCCommand(this);
+		new ScratchCommand(this);
 	}
 
 	private void setupScoreboards() {
@@ -151,11 +165,33 @@ public class UHC extends JavaPlugin implements Listener {
 		return team;
 	}
 
-	private void addToTeam(Player player, Team team) {
+	public Team joinTeam(Player player, String teamName, boolean requireInvitation) throws UHCError {
+		Team onTeam = getMainScoreboard().getPlayerTeam(player);
+		if (onTeam != null) {
+			throw new UHCError("You are already on a team!");
+		}
+		Team team = getMainScoreboard().getTeam(teamName);
+		if (team == null) {
+			throw new UHCError("Unknown Team: " + teamName);
+		}
+		if (requireInvitation) {
+			if (!player.hasMetadata("teamInvites")) {
+				throw new UHCError("You have not been invited to join " + team.getDisplayName());
+			}
+			List<String> invites = (List<String>) player.getMetadata("teamInvites").get(0).value();
+			if (!invites.contains(team.getName())) {
+				throw new UHCError("You have not been invited to join " + team.getDisplayName());
+			}
+		}
+		if (team.getSize() == getTeamSize()) {
+			throw new UHCError("That team already has the maximum number of players.");
+		}
 		team.addPlayer(player);
 		Score s = teamScoreboard.getObjective("members").getScore(Bukkit.getOfflinePlayer(team.getName()));
-		s.setScore(s.getScore() + 1);
+		s.setScore(team.getPlayers().size());
+		return team;
 	}
+
 
 	private String slugify(String s) {
 		s = s.toLowerCase().replace("[^A-Za-z0-9]", "_");
@@ -226,17 +262,13 @@ public class UHC extends JavaPlugin implements Listener {
 		return getServer().getWorld(getConfig().getString("world-name"));
 	}
 
-	public boolean isPlayerAllowed(Player p){
-		Set<Team> teams = this.getMainScoreboard().getTeams();
-		Set<OfflinePlayer> allowedPlayers = new HashSet<OfflinePlayer>();
-		for (Team team: teams) {
+	public boolean isParticipant(String name){
+		for (Team team: getMainScoreboard().getTeams()) {
 			for (OfflinePlayer player: team.getPlayers()) {
-				allowedPlayers.add(player);
+				if (player.getName().equals(name)) {
+					return true;
+				}
 			}
-		}
-		OfflinePlayer op = (OfflinePlayer) p;
-		if(allowedPlayers.contains(op)) {
-			return true;
 		}
 		return false;
 	}

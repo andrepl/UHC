@@ -3,8 +3,6 @@ package com.norcode.bukkit.uhc.phase;
 import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.UHC;
 import com.norcode.bukkit.uhc.UHCError;
-import org.bukkit.Difficulty;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -38,11 +36,6 @@ public class PreGame extends Phase {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.setScoreboard(plugin.getTeamScoreboard());
 		}
-		World world = plugin.getServer().getWorld("world");
-		world.setDifficulty(Difficulty.PEACEFUL);
-		world.setGameRuleValue("doDaylightCycle", "false");
-		world.setTime(800);
-		world.setPVP(false);
 	}
 
 	@EventHandler(ignoreCancelled=true)
@@ -66,7 +59,7 @@ public class PreGame extends Phase {
 	public void onEnd() {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.sendMessage("Pre-game is over.");
-			if (p.hasPermission("uhc.staff") || plugin.isPlayerAllowed(p)) {
+			if (p.hasPermission("uhc.staff") || plugin.isParticipant(p.getName())) {
 				continue;
 			}
 			p.kickPlayer("The game has started without you");
