@@ -75,15 +75,11 @@ public class Scatter extends Phase {
 		spawnerTask.runTaskTimer(plugin, 2, 2);
 	}
 
-	private int getIndex() {
-		return teamCount - teams.size();
-	}
-
-
 	public int getSlice(Location l) {
 		Location spawn = l.getWorld().getSpawnLocation();
 		Vector v = l.toVector().subtract(spawn.toVector());
-		float angle = v.angle(new Vector(spawn.getBlockX() + 1000000, spawn.getBlockY(), spawn.getBlockZ()));
+		Vector v2 = new Vector(spawn.getBlockX() + 1000000, spawn.getBlockY(), spawn.getBlockZ()).subtract(spawn.toVector());
+		float angle = v.angle(v2);
 		if (l.getBlockZ() < spawn.getBlockZ()) {
 			angle = -angle;
 		}
@@ -91,9 +87,7 @@ public class Scatter extends Phase {
 			angle = ((float) Math.PI) + ((float) Math.PI - Math.abs(angle));
 		}
 		float sliceSize = (float) (2 * Math.PI / 16f);
-		int s = (int) (angle / sliceSize);
-		plugin.getLogger().info("Angle from " + l.getBlockX() + "," + l.getBlockZ() + " to " + spawn.getBlockX() + "," + spawn.getBlockZ() + " is " + angle + " (slice + " + s + ")");
-		return s;
+		return (int) (angle / sliceSize);
 	}
 
 	private ArrayList<Integer> occupiedSlices = new ArrayList<Integer>();
