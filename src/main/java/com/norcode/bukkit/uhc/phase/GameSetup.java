@@ -7,8 +7,11 @@ import org.bukkit.event.server.ServerListPingEvent;
 
 public class GameSetup extends Phase {
 
-	public GameSetup(UHC plugin) {
+	private boolean regen;
+
+	public GameSetup(UHC plugin, boolean regen) {
 		super(plugin, "Game-Setup");
+		this.regen = regen;
 	}
 
 	@Override
@@ -29,7 +32,7 @@ public class GameSetup extends Phase {
 
 	@Override
 	public void onStart() {
-		plugin.getWorldSetup().start();
+		plugin.getWorldSetup().start(regen);
 	}
 
 	@Override

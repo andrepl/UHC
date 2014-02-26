@@ -141,6 +141,9 @@ public class UHC extends JavaPlugin implements Listener {
 
 		String worldName = getConfig().getString("world-name");
 		worldSetup = new WorldSetup(this, worldName);
+		for (World w: getServer().getWorlds()) {
+			getLogger().info("Found World: " + w.getName());
+		}
 	}
 
 
@@ -243,9 +246,9 @@ public class UHC extends JavaPlugin implements Listener {
 		game.start();
 	}
 
-	public void startSetup() {
+	public void startSetup(boolean regen) {
 		game = new Game(this);
-		game.addPhase(new GameSetup(this));
+		game.addPhase(new GameSetup(this, regen));
 		game.start();
 	}
 

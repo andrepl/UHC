@@ -36,7 +36,6 @@ public class WallBuilder extends BukkitRunnable {
 
 		BlockState state;
 		Location loc = new Location(world, x, 64, z);
-		plugin.getLogger().info("Setting column " + x + "," + z + ", Chunk Loaded? " + loc.getChunk().isLoaded());
 		if (!loc.getChunk().isLoaded()) {
 			loc.getChunk().load(true);
 		}
@@ -45,27 +44,29 @@ public class WallBuilder extends BukkitRunnable {
 			state = loc.getBlock().getState();
 			state.setType(Material.BEDROCK);
 			state.update(true, false);
-			//plugin.getLogger().info("Set Block at " + loc + " to " + loc.getBlock().getType());
 		}
 	}
 
 	@Override
 	public void run() {
-		//plugin.getLogger().info("Step: " + this.step + "/" + this.maxSteps);
-		if (this.step <= maxX - minX) {
-			// doing the X lines.
-			setColumn(minX + this.step, minZ);
-			setColumn(minX + this.step, maxZ);
-		} else {
-			// doing the X lines.
-			int _step = this.step - (maxX - minX);
-			setColumn(minX, minZ + _step);
-			setColumn(maxX, minZ + _step);
-		}
-		this.step ++;
-		if (this.step == maxSteps) {
-			this.cancel();
-			plugin.getLogger().info("Walls Complete");
+		for (int i=0; i<5; i++) {
+			//plugin.getLogger().info("Step: " + this.step + "/" + this.maxSteps);
+			if (this.step <= maxX - minX) {
+				// doing the X lines.
+				setColumn(minX + this.step, minZ);
+				setColumn(minX + this.step, maxZ);
+			} else {
+				// doing the X lines.
+				int _step = this.step - (maxX - minX);
+				setColumn(minX, minZ + _step);
+				setColumn(maxX, minZ + _step);
+			}
+			this.step ++;
+			if (this.step == maxSteps) {
+				this.cancel();
+				plugin.getLogger().info("Walls Complete");
+				return;
+			}
 		}
 	}
 

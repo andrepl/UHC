@@ -25,7 +25,7 @@ public class WorldSetup extends BukkitRunnable {
 	private WallBuilder wallBuilder;
 	private Random random = new Random();
 	private FakePlayer fakePlayer;
-
+	private boolean regenerate;
 	private Method reportMethod;
 
 	public WorldSetup(UHC plugin, String worldName) {
@@ -36,9 +36,17 @@ public class WorldSetup extends BukkitRunnable {
 			reportMethod = WorldFillTask.class.getDeclaredMethod("reportProgress");
 			reportMethod.setAccessible(true);
 		} catch (NoSuchMethodException e) {
-			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+			e.printStackTrace();
 		}
 
+	}
+
+	public boolean doRegeneration() {
+		return regenerate;
+	}
+
+	public void setDoRegeneration(boolean doRegeneration) {
+		this.regenerate = doRegeneration;
 	}
 
 	private void setupGoal() {
@@ -74,30 +82,38 @@ public class WorldSetup extends BukkitRunnable {
 		return sb.toString();
 	}
 
-	public void start() {
+	public void start(boolean regenerate) {
+		this.regenerate = regenerate;
 		WorldCreator creator = new WorldCreator(worldName);
 		creator.type(WorldType.valueOf(plugin.getConfig().getString("world-type", "NORMAL")));
 		creator.environment(World.Environment.valueOf(plugin.getConfig().getString("environment", "NORMAL")));
 		creator.generateStructures(plugin.getConfig().getBoolean("generate-structures"));
-		long seed;
-		String seedString = plugin.getConfig().getString("world-seed", null);
-		if (seedString == null) {
-			seedString = randomString(64);
+		if (regenerate) {
+			long seed;
+			String seedString = plugin.getConfig().getString("world-seed", null);
+			if (seedString == null) {
+				seedString = randomString(64);
+			}
+			try {
+				seed = Long.parseLong(seedString);
+			} catch (IllegalArgumentException ex) {
+				seed = seedString.hashCode();
+				plugin.getConfig().set("world-seed", seed);
+				plugin.saveConfig();
+			}
+			creator.seed(seed);
 		}
-		try {
-			seed = Long.parseLong(seedString);
-		} catch (IllegalArgumentException ex) {
-			seed = seedString.hashCode();
-			plugin.getConfig().set("world-seed", seed);
-			plugin.saveConfig();
-		}
-		creator.seed(seed);
 		World world = creator.createWorld();
 		setupGoal();
 		int sizeX = plugin.getConfig().getInt("size.x");
 		int sizeZ = plugin.getConfig().getInt("size.z");
 		setupBorder(sizeX, sizeZ);
-		startWorldGeneration();
+		if (regenerate) {
+			startWorldGeneration();
+		} else {
+			wallBuilder = new WallBuilder(plugin, plugin.getServer().getWorld(worldName));
+			wallBuilder.start();
+		}
 		this.runTaskTimer(plugin, 20, 20);
 	}
 
@@ -123,7 +139,10 @@ public class WorldSetup extends BukkitRunnable {
 	}
 
 	public boolean generationComplete() {
-		return fakePlayer.getFillStatus().equals(FakePlayer.FILL_COMPLETE);
+		if (regenerate) {
+			return fakePlayer.getFillStatus().equals(FakePlayer.FILL_COMPLETE);
+		}
+		return true;
 	}
 
 	public int getGenerationPercentage() {
@@ -133,13 +152,15 @@ public class WorldSetup extends BukkitRunnable {
 
 	@Override
 	public void run() {
-		if (reportMethod != null) {
-			try {
-				reportMethod.invoke(Config.fillTask);
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+		if (regenerate) {
+			if (reportMethod != null) {
+				try {
+					reportMethod.invoke(Config.fillTask);
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		if (generationComplete()) {
@@ -163,17 +184,21 @@ public class WorldSetup extends BukkitRunnable {
 	}
 
 	public int getPercentage() {
-		if (generationComplete()) {
-			if (wallBuilder == null) {
-				wallBuilder = new WallBuilder(plugin, plugin.getServer().getWorld(worldName));
-				wallBuilder.start();
-				return 85;
+		if (regenerate) {
+			if (generationComplete()) {
+				if (wallBuilder == null) {
+					wallBuilder = new WallBuilder(plugin, plugin.getServer().getWorld(worldName));
+					wallBuilder.start();
+					return 85;
+				}
+				int pct = 85;
+				pct += (int) (getBorderPercentage() * 0.15);
+				return pct;
+			} else {
+				return (int) (getGenerationPercentage() * 0.85);
 			}
-			int pct = 85;
-			pct += (int) (getBorderPercentage() * 0.15);
-			return pct;
 		} else {
-			return (int) (getGenerationPercentage() * 0.85);
+			return getBorderPercentage();
 		}
 	}
 

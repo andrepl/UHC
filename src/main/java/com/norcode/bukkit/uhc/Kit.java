@@ -59,6 +59,7 @@ public class Kit {
 	}
 
 	public void give(Player p) {
+		p.getInventory().clear();
 		if (helmet != null) {
 			p.getInventory().setHelmet(helmet.clone());
 		}

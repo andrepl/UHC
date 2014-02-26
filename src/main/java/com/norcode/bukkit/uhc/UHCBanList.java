@@ -17,7 +17,7 @@ public class UHCBanList {
 
 	public boolean isPlayerBanned(Player player) {
 		return bans.containsKey(player.getName()) &&
-				bans.get(player.getName()).getExpiry().before(new Date());
+				bans.get(player.getName()).getExpiry().after(new Date());
 	}
 
 	public Ban getBan(Player player) {

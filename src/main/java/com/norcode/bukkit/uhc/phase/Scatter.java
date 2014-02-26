@@ -5,6 +5,7 @@ import com.norcode.bukkit.uhc.Kit;
 import com.norcode.bukkit.uhc.UHC;
 import com.wimbli.WorldBorder.BorderData;
 import org.bukkit.Difficulty;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -232,6 +233,7 @@ public class Scatter extends Phase {
 			loc.getChunk().load(true);
 		}
 		player.teleport(loc);
+		player.setGameMode(GameMode.SURVIVAL);
 		player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 10));
 		player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 6));
 		player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, Integer.MAX_VALUE, 128));

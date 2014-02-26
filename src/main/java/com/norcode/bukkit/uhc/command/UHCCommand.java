@@ -24,9 +24,15 @@ public class UHCCommand extends BaseCommand {
 		@Override
 		protected void onExecute(CommandSender commandSender, String label, LinkedList<String> args) throws CommandError {
 			Game game = ((UHC) plugin).getGame();
+			boolean regen = false;
+			if (args.size() > 0) {
+				if ("generate".startsWith(args.peek())) {
+					regen = true;
+				}
+			}
 			if (game == null) {
 				commandSender.sendMessage("Generating " + plugin.getConfig().getString("world-name"));
-				((UHC) plugin).startSetup();
+				((UHC) plugin).getWorldSetup().start(regen);
 			} else if (game.isGameSetup()) {
 				throw new CommandError("Setup is already in progress.");
 			} else {
