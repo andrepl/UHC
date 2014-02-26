@@ -3,6 +3,7 @@ package com.norcode.bukkit.uhc.phase;
 import com.norcode.bukkit.uhc.Game;
 import com.norcode.bukkit.uhc.UHC;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
 public class GameSetup extends Phase {
@@ -42,4 +43,9 @@ public class GameSetup extends Phase {
 		event.setServerIcon(plugin.getPhaseIcon(GameSetup.class));
 	}
 
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerJoinEvent(PlayerJoinEvent event) {
+		event.getPlayer().sendMessage("You have joined a game during initial setup");
+		event.getPlayer().sendMessage("This can take a while to generate the world to be played");
+	}
 }

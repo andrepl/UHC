@@ -35,6 +35,7 @@ public class PreGame extends Phase {
 	public void onStart() {
 		for (Player p: plugin.getServer().getOnlinePlayers()) {
 			p.setScoreboard(plugin.getTeamScoreboard());
+			p.sendMessage("Pre game has started.  You must join a team before the timer expires.  Type /team <name> to create your own team");
 		}
 	}
 
@@ -53,6 +54,8 @@ public class PreGame extends Phase {
 				}
 			}
 		}
+		event.getPlayer().sendMessage("Welcome to Mine vs Mine UHC!  Type /team to get started or ask in chat if you need a team");
+		event.getPlayer().teleport(plugin.getUHCWorld().getSpawnLocation());
 	}
 
 	@Override
